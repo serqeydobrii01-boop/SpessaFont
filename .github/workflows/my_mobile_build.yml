@@ -19,11 +19,11 @@ jobs:
       - name: Build Web Version
         run: npm run build:fast
 
-      - name: Setup Java (Updated to 21)
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '21' # Теперь точно совпадет с требованиями Capacitor
+          java-version: '21'
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
@@ -38,10 +38,14 @@ jobs:
           fi
           npx cap init "SpessaFontMobile" "com.my.spessafont" --web-dir $WEB_DIR
           npx cap add android
+          
+          # ФИКС КОНФЛИКТА KOTLIN: обновляем зависимости внутри папки android
+          npx cap update android
+          
           npx cap copy
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --stacktrace
 
       - name: Upload Finished APK
         uses: actions/upload-artifact@v4

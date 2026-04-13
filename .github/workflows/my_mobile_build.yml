@@ -8,7 +8,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Install Node (Updated to v20)
+      - name: Install Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -16,15 +16,14 @@ jobs:
       - name: Install Project Dependencies
         run: npm install
 
-      - name: Build Web Version (Skipping tests)
-        # Мы заменяем стандартную сборку на быструю, без тестов и линтеров
+      - name: Build Web Version
         run: npm run build:fast
 
-      - name: Setup Java
+      - name: Setup Java (Updated to 21)
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21' # Теперь точно совпадет с требованиями Capacitor
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
@@ -32,7 +31,6 @@ jobs:
       - name: Add Capacitor and Build APK
         run: |
           npm install @capacitor/core @capacitor/cli @capacitor/android
-          # Проверяем папку сборки
           if [ -d "dist" ]; then
             WEB_DIR="dist"
           else

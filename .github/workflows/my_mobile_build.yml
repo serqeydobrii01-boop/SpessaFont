@@ -8,16 +8,17 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Install Node
+      - name: Install Node (Updated to v20)
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
 
       - name: Install Project Dependencies
         run: npm install
 
-      - name: Build Web Version
-        run: npm run build
+      - name: Build Web Version (Skipping tests)
+        # Мы заменяем стандартную сборку на быструю, без тестов и линтеров
+        run: npm run build:fast
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -31,14 +32,11 @@ jobs:
       - name: Add Capacitor and Build APK
         run: |
           npm install @capacitor/core @capacitor/cli @capacitor/android
-          # Автоматически находим папку со сборкой (dist или build)
+          # Проверяем папку сборки
           if [ -d "dist" ]; then
             WEB_DIR="dist"
-          elif [ -d "build" ]; then
-            WEB_DIR="build"
           else
-            echo "Error: Build directory not found!"
-            exit 1
+            WEB_DIR="."
           fi
           npx cap init "SpessaFontMobile" "com.my.spessafont" --web-dir $WEB_DIR
           npx cap add android

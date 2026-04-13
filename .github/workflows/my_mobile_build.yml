@@ -1,4 +1,4 @@
-name: Mobile APK Generator (The Winner)
+name: Mobile APK Generator (Force Build)
 on: [workflow_dispatch, push]
 
 jobs:
@@ -19,33 +19,33 @@ jobs:
       - name: Build Web App
         run: npm run build:fast
 
-      - name: Setup Java (FORCE 21)
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Setup Android SDK and Licenses
+      - name: Setup Android SDK
         uses: android-actions/setup-android@v3
-      
-      - name: Accept Licenses
-        run: yes | sdkmanager --licenses || true
 
-      - name: Final Android Build
+      - name: Final Force Build
         run: |
           npm install @capacitor/core @capacitor/cli @capacitor/android
-          # Проверяем папку
           [ -d "dist" ] && WEB_DIR="dist" || WEB_DIR="."
           npx cap init "SpessaFontMobile" "com.my.spessafont" --web-dir $WEB_DIR
           npx cap add android
           
-          # Фикс версий Kotlin прямо в файлах проекта
-          npx cap update android
+          # ХАК: Исправляем конфликт дубликатов Kotlin через build.gradle
+          echo "android.pickFirsts += ['**/kotlin-stdlib-jdk8', '**/kotlin-stdlib-jdk7', '**/kotlin-stdlib']" >> android/app/build.gradle
           
+          # Принудительно выравниваем версии Kotlin в переменной проекта
+          sed -i 's/kotlin_version = .*/kotlin_version = "1.9.10"/g' android/variables.gradle
+          
+          npx cap update android
           npx cap copy
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

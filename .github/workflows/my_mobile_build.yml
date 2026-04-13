@@ -1,4 +1,4 @@
-name: Mobile APK Generator (Total Annihilation)
+name: Mobile APK Generator (Final Strike)
 on: [workflow_dispatch, push]
 
 jobs:
@@ -35,13 +35,16 @@ jobs:
           npx cap init "SpessaFontMobile" "com.my.spessafont" --web-dir $WEB_DIR
           npx cap add android
           
-          # ЖЕСТКИЙ ФИКС ДУБЛИКАТОВ
+          # ГЛАВНЫЙ ФИКС: правим билд-файл именно внутри папки APP
+          echo "configurations.all { exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'; exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8' }" >> android/app/build.gradle
+          
+          # Отключаем проверку дубликатов везде, где можно
+          echo "android.attachments.checkDuplicateClasses=false" >> android/gradle.properties
+          echo "android.enforceUniquePackageName=false" >> android/gradle.properties
+          
+          npx cap update android
+          npx cap copy
           cd android
-          echo "configurations.all { exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'; exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8' }" >> build.gradle
-          
-          # ОТКЛЮЧАЕМ ПРОВЕРКУ ДУБЛИКАТОВ
-          echo "android.attachments.checkDuplicateClasses = false" >> gradle.properties
-          
           chmod +x gradlew
           ./gradlew assembleDebug --stacktrace
 

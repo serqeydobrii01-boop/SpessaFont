@@ -1,4 +1,4 @@
-name: Mobile APK Generator (Stable)
+name: Mobile APK Generator (Final Force)
 on: [workflow_dispatch, push]
 
 jobs:
@@ -25,18 +25,27 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Build APK via Bubblewrap
-        # Это более легкий способ превратить сайт в приложение без мучений с Kotlin
+      - name: Accept Android Licenses
         run: |
-          npm install -g @bubblewrap/cli
-          # Создаем настройки для приложения автоматически
-          yes | bubblewrap init --manifest=dist/manifest.json || true
-          # Если манифеста нет, создаем заглушку, чтобы сборка не упала
-          mkdir -p .bubblewrap
-          bubblewrap build --skipSigning
+          yes | sdkmanager --licenses || true
 
-      - name: Find and Upload APK
+      - name: Build APK via Capacitor (Clean Way)
+        run: |
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+          # Создаем чистый проект без старых конфликтов
+          npx cap init "SpessaFontMobile" "com.my.spessafont" --web-dir dist
+          npx cap add android
+          
+          # Жестко прописываем версию Kotlin, чтобы не было конфликтов
+          sed -i 's/kotlin_version = .*/kotlin_version = "1.9.10"/g' android/variables.gradle
+          
+          npx cap copy
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload Finished APK
         uses: actions/upload-artifact@v4
         with:
           name: SpessaFont-Mobile-App
-          path: "**/*.apk"
+          path: android/app/build/outputs/apk/debug/app-debug.apk
